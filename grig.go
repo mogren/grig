@@ -10,6 +10,10 @@ import (
 var langFlag string
 var listLangFlag bool
 
+type RigDict struct {
+  fnames, mnames, lnames, streets, zipcodes map[string]int
+}
+
 func init() {
 	flag.StringVar(&langFlag, "lang", "en", "Select ISO 639-1 language code")
 	flag.BoolVar(&listLangFlag, "l", false, "List available ISO language codes")
