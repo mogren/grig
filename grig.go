@@ -1,17 +1,19 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
-  "os"
-  "io/ioutil"
+	"io/ioutil"
+	"os"
+	"strings"
 )
 
 var langFlag string
 var listLangFlag bool
 
 type RigDict struct {
-  fnames, mnames, lnames, streets, zipcodes map[string]int
+	fnames, mnames, lnames, streets, zipcodes map[string]int
 }
 
 func init() {
@@ -21,21 +23,36 @@ func init() {
 
 func main() {
 	flag.Parse()
-  if (listLangFlag) {
-    fmt.Println("list: ")
-    return
-  }
-	fmt.Println("hello " + langFlag)
-  loadData(langFlag)
+	if listLangFlag {
+		listLangs()
+		return
+	}
+	loadData(langFlag)
+}
+
+func listLangs() {
+	// for all dirs in data
+	files, _ := ioutil.ReadDir("./data/")
+	for _, f := range files {
+		if f.IsDir() && !strings.HasPrefix(f.Name(), ",") {
+			fmt.Println(f.Name())
+		}
+	}
+}
+
+func validateDir(iso string) {
+	// Check for fnames, mnames, lnames, zipcodes and streets
 }
 
 func loadData(iso string) {
-  file, err := ioutil.ReadFile("data/" + langFlag + "/fnames.grig")
-  if err != nil {
-    fmt.Println(err)
-    os.Exit(0)
-  }
-  str := string(file)
-  fmt.Println(str)
+	file, err := os.Open("data/" + langFlag + "/fnames.grig")
+	defer file.Close()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
+	}
 }
-
