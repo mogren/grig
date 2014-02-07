@@ -1,3 +1,9 @@
+// The MIT License (MIT)
+// Copyright (c) 2014 Claes Mogren
+// http://opensource.org/licenses/MIT
+
+// Code to generate a weighted random identity based on weighted input files
+// http://www.keithschwarz.com/darts-dice-coins/
 package main
 
 import (
@@ -13,8 +19,20 @@ var langFlag string
 var listLangFlag bool
 var verbose bool
 
+type RigLine struct {
+	weight float64
+	text   []string
+}
+
+type RigFile struct {
+	tot      float64
+	probList []float64
+	texts    [][]string
+	// Vose
+}
+
 type RigDict struct {
-	fnames, mnames, lnames, streets, zipcodes map[string]int
+	fnames, mnames, lnames, streets, zipcodes []string
 }
 
 func init() {
@@ -27,7 +45,7 @@ func main() {
 	flag.Parse()
 	if listLangFlag {
 		listLangs()
-		return
+		os.Exit(0)
 	}
 	loadData(langFlag)
 }
@@ -60,8 +78,15 @@ func validateDir(iso string) bool {
 	return valid
 }
 
-func loadData(iso string) {
-	file, err := os.Open("data/" + langFlag + "/fnames.grig")
+func loadData(iso string) RigDict {
+	//{"fnames.grig", "lnames.grig", "mnames.grig", "streets.grig", "zipcodes.grig"}
+	dict := RigDict{}
+	dict.fnames = loadFile("fname.grig")
+	return dict
+}
+
+func loadFile(srcFile string) map[string]int {
+	file, err := os.Open("data/" + iso + "/" + srcFile)
 	defer file.Close()
 	if err != nil {
 		fmt.Println(err)
@@ -69,6 +94,6 @@ func loadData(iso string) {
 	}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+		dataStr := scanner.Text()
 	}
 }
