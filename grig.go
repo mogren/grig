@@ -11,6 +11,7 @@ import (
 
 var langFlag string
 var listLangFlag bool
+var verbose bool
 
 type RigDict struct {
 	fnames, mnames, lnames, streets, zipcodes map[string]int
@@ -19,6 +20,7 @@ type RigDict struct {
 func init() {
 	flag.StringVar(&langFlag, "lang", "en", "Select ISO 639-1 language code")
 	flag.BoolVar(&listLangFlag, "l", false, "List available ISO language codes")
+	flag.BoolVar(&verbose, "v", false, "Verbose output")
 }
 
 func main() {
@@ -35,13 +37,27 @@ func listLangs() {
 	files, _ := ioutil.ReadDir("./data/")
 	for _, f := range files {
 		if f.IsDir() && !strings.HasPrefix(f.Name(), ",") {
-			fmt.Println(f.Name())
+			if validateDir(f.Name()) {
+				fmt.Println(f.Name())
+			}
 		}
 	}
 }
 
-func validateDir(iso string) {
+func validateDir(iso string) bool {
 	// Check for fnames, mnames, lnames, zipcodes and streets
+	srcFileNames := []string{"fnames.grig", "lnames.grig", "mnames.grig", "streets.grig", "zipcodes.grig"}
+	valid := true
+	for _, srcFile := range srcFileNames {
+		filename := "./data/" + iso + "/" + srcFile
+		if _, err := os.Stat(filename); os.IsNotExist(err) {
+			if verbose {
+				fmt.Println("Data file", srcFile, "missing for", iso)
+			}
+			valid = false
+		}
+	}
+	return valid
 }
 
 func loadData(iso string) {
