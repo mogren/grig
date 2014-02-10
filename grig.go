@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -32,7 +33,7 @@ type RigFile struct {
 }
 
 type RigDict struct {
-	fnames, mnames, lnames, streets, zipcodes []string
+	fnames, mnames, lnames, streets, zipcodes RigFile
 }
 
 func init() {
@@ -81,11 +82,11 @@ func validateDir(iso string) bool {
 func loadData(iso string) RigDict {
 	//{"fnames.grig", "lnames.grig", "mnames.grig", "streets.grig", "zipcodes.grig"}
 	dict := RigDict{}
-	dict.fnames = loadFile("fname.grig")
+	dict.fnames = loadFile(iso, "fnames.grig")
 	return dict
 }
 
-func loadFile(srcFile string) map[string]int {
+func loadFile(iso string, srcFile string) RigFile {
 	file, err := os.Open("data/" + iso + "/" + srcFile)
 	defer file.Close()
 	if err != nil {
@@ -94,6 +95,16 @@ func loadFile(srcFile string) map[string]int {
 	}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		dataStr := scanner.Text()
+		dataStr := strings.Split(scanner.Text(), "\t")
+		// string to float
+		i, err := strconv.ParseFloat(dataStr[0], 64)
+		if err != nil {
+			// handle error
+			fmt.Println(err)
+			os.Exit(2)
+		}
+		str := dataStr[1:]
+		fmt.Println("P: ", i, str)
 	}
+	return RigFile{}
 }
