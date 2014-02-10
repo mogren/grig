@@ -12,24 +12,21 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var langFlag string
 var listLangFlag bool
 var verbose bool
 
-type RigLine struct {
-	weight float64
-	text   []string
-}
-
 type RigFile struct {
-	tot      float64
-	probList []float64
-	texts    [][]string
+	tot     float64
+	weights []float64
+	texts   [][]string
 	// Vose
 }
 
@@ -49,7 +46,9 @@ func main() {
 		listLangs()
 		os.Exit(0)
 	}
-	loadData(langFlag)
+	rand.Seed(time.Now().UnixNano())
+	dict := loadData(langFlag)
+	printNext(dict)
 }
 
 func listLangs() {
@@ -81,31 +80,57 @@ func validateDir(iso string) bool {
 }
 
 func loadData(iso string) RigDict {
-	//{"fnames.grig", "lnames.grig", "mnames.grig", "streets.grig", "zipcodes.grig"}
 	dict := RigDict{}
 	dict.fnames = loadFile(iso, "fnames.grig")
+	dict.mnames = loadFile(iso, "mnames.grig")
+	dict.lnames = loadFile(iso, "lnames.grig")
+	dict.streets = loadFile(iso, "streets.grig")
+	dict.zipcodes = loadFile(iso, "zipcodes.grig")
+	if verbose {
+		fmt.Println("fname tot:", dict.fnames.tot, dict.fnames.texts[0])
+		fmt.Println("mname tot:", dict.mnames.tot, dict.mnames.texts[0])
+		fmt.Println("lname tot:", dict.lnames.tot, dict.lnames.texts[0])
+	}
 	return dict
 }
 
 func loadFile(iso string, srcFile string) RigFile {
 	file, err := os.Open("data/" + iso + "/" + srcFile)
+	rigFile := RigFile{}
+	rigFile.weights = make([]float64, 0)
+	rigFile.texts = make([][]string, 0)
 	defer file.Close()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(0)
 	}
 	scanner := bufio.NewScanner(file)
+	sum := 0.0
 	for scanner.Scan() {
 		dataStr := strings.Split(scanner.Text(), "\t")
 		// string to float
-		i, err := strconv.ParseFloat(dataStr[0], 64)
+		f, err := strconv.ParseFloat(dataStr[0], 64)
 		if err != nil {
-			// handle error
+			// Ignore error
 			fmt.Println(err)
-			os.Exit(2)
 		}
+		sum += f
 		str := dataStr[1:]
-		fmt.Println("P: ", i, str)
+		rigFile.weights = append(rigFile.weights, f)
+		rigFile.texts = append(rigFile.texts, str)
+		if verbose {
+			fmt.Println("P: ", f, str)
+		}
 	}
-	return RigFile{}
+	rigFile.tot = sum
+	return rigFile
+}
+
+func printNext(dict RigDict) {
+	if rand.Intn(2) == 0 {
+		fmt.Print(dict.fnames.texts[rand.Intn(len(dict.fnames.texts))])
+	} else {
+		fmt.Print(dict.mnames.texts[rand.Intn(len(dict.mnames.texts))])
+	}
+	fmt.Println(dict.lnames.texts[rand.Intn(len(dict.lnames.texts))])
 }
