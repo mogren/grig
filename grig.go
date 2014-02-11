@@ -49,6 +49,9 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	dict := loadData(langFlag)
 	printNext(dict)
+	printNext(dict)
+	printNext(dict)
+	printNext(dict)
 }
 
 func listLangs() {
@@ -128,9 +131,13 @@ func loadFile(iso string, srcFile string) RigFile {
 
 func printNext(dict RigDict) {
 	if rand.Intn(2) == 0 {
-		fmt.Print(dict.fnames.texts[rand.Intn(len(dict.fnames.texts))])
+		fmt.Print(dict.fnames.texts[rand.Intn(len(dict.fnames.texts))][0])
 	} else {
-		fmt.Print(dict.mnames.texts[rand.Intn(len(dict.mnames.texts))])
+		fmt.Print(dict.mnames.texts[rand.Intn(len(dict.mnames.texts))][0])
 	}
-	fmt.Println(dict.lnames.texts[rand.Intn(len(dict.lnames.texts))])
+	fmt.Println(" " + dict.lnames.texts[rand.Intn(len(dict.lnames.texts))][0])
+	fmt.Println(dict.streets.texts[rand.Intn(len(dict.streets.texts))][0], rand.Intn(50))
+	zip := dict.zipcodes.texts[rand.Intn(len(dict.zipcodes.texts))]
+	fmt.Println(zip[0], zip[1])
+	fmt.Println()
 }
