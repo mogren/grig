@@ -24,6 +24,11 @@ var listLangFlag bool
 var verbose bool
 var nrLoopsFlag int
 
+type Rig struct {
+	firstname, lastname, street, city string
+	streetNumber, zipCode             int
+}
+
 type RigFile struct {
 	tot     float64
 	weights []float64
@@ -51,7 +56,8 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	dict := loadData(langFlag)
 	for i := 0; i < nrLoopsFlag; i++ {
-		printNext(dict)
+		rig := getNext(dict)
+		fmt.Println(rig.firstname, rig.lastname)
 	}
 }
 
@@ -130,15 +136,18 @@ func loadFile(iso string, srcFile string) RigFile {
 	return rigFile
 }
 
-func printNext(dict RigDict) {
+func getNext(dict RigDict) Rig {
+	rig := Rig{}
 	if rand.Intn(2) == 0 {
-		fmt.Print(dict.fnames.texts[rand.Intn(len(dict.fnames.texts))][0])
+		rig.firstname = dict.fnames.texts[rand.Intn(len(dict.fnames.texts))][0]
 	} else {
-		fmt.Print(dict.mnames.texts[rand.Intn(len(dict.mnames.texts))][0])
+		rig.firstname = dict.mnames.texts[rand.Intn(len(dict.mnames.texts))][0]
 	}
-	fmt.Println(" " + dict.lnames.texts[rand.Intn(len(dict.lnames.texts))][0])
-	fmt.Println(dict.streets.texts[rand.Intn(len(dict.streets.texts))][0], rand.Intn(50))
+	rig.lastname = dict.lnames.texts[rand.Intn(len(dict.lnames.texts))][0]
+	rig.street = dict.streets.texts[rand.Intn(len(dict.streets.texts))][0]
+	rig.streetNumber = rand.Intn(50)
 	zip := dict.zipcodes.texts[rand.Intn(len(dict.zipcodes.texts))]
-	fmt.Println(zip[0], zip[1])
-	fmt.Println()
+	rig.city = zip[1]
+	rig.zipCode, _ = strconv.Atoi(zip[0])
+	return rig
 }
