@@ -22,6 +22,7 @@ import (
 var langFlag string
 var listLangFlag bool
 var verbose bool
+var nrLoopsFlag int
 
 type RigFile struct {
 	tot     float64
@@ -38,6 +39,7 @@ func init() {
 	flag.StringVar(&langFlag, "lang", "en", "Select ISO 639-1 language code")
 	flag.BoolVar(&listLangFlag, "l", false, "List available ISO language codes")
 	flag.BoolVar(&verbose, "v", false, "Verbose output")
+	flag.IntVar(&nrLoopsFlag, "n", 1, "Number of identities to output")
 }
 
 func main() {
@@ -48,10 +50,9 @@ func main() {
 	}
 	rand.Seed(time.Now().UnixNano())
 	dict := loadData(langFlag)
-	printNext(dict)
-	printNext(dict)
-	printNext(dict)
-	printNext(dict)
+	for i := 0; i < nrLoopsFlag; i++ {
+		printNext(dict)
+	}
 }
 
 func listLangs() {
