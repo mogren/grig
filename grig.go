@@ -10,6 +10,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"encoding/xml"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -24,10 +25,16 @@ var langFlag string
 var listLangFlag bool
 var verbose bool
 var nrLoopsFlag int
+var jsonFlag bool
+var xmlFlag bool
 
 type Rig struct {
-	Firstname, Lastname, Street, City string
-	Streetnumber, Zipcode             int
+	Firstname    string `json:"firstname" xml:"firstname"`
+	Lastname     string `json:"lastname" xml:"lastname"`
+	Street       string `json:"street" xml:"street"`
+	Streetnumber int    `json:"nr" xml:"nr"`
+	Zipcode      int    `json:"zip" xml:"zip"`
+	City         string `json:"city" xml:"city"`
 }
 
 func (r Rig) AsText() string {
@@ -45,6 +52,14 @@ func (r Rig) AsJson() string {
 	return string(b)
 }
 
+func (r Rig) AsXml() string {
+	b, err := xml.MarshalIndent(r, "", "  ")
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	return string(b)
+}
+
 type RigFile struct {
 	tot     float64
 	weights []float64
@@ -53,13 +68,15 @@ type RigFile struct {
 }
 
 type RigDict struct {
-	fnames, mnames, lnames, Streets, zipcodes RigFile
+	fnames, mnames, lnames, streets, zipcodes RigFile
 }
 
 func init() {
 	flag.StringVar(&langFlag, "lang", "en", "Select ISO 639-1 language code")
 	flag.BoolVar(&listLangFlag, "l", false, "List available ISO language codes")
 	flag.BoolVar(&verbose, "v", false, "Verbose output")
+	flag.BoolVar(&jsonFlag, "j", false, "Print as JSON")
+	flag.BoolVar(&xmlFlag, "x", false, "Print as XML")
 	flag.IntVar(&nrLoopsFlag, "n", 1, "Number of identities to output")
 }
 
@@ -73,8 +90,13 @@ func main() {
 	dict := loadData(langFlag)
 	for i := 0; i < nrLoopsFlag; i++ {
 		rig := getNext(dict)
-		fmt.Println(rig.AsText())
-		fmt.Println(rig.AsJson())
+		if jsonFlag {
+			fmt.Println(rig.AsJson())
+		} else if xmlFlag {
+			fmt.Println(rig.AsXml())
+		} else {
+			fmt.Println(rig.AsText())
+		}
 	}
 }
 
@@ -111,7 +133,7 @@ func loadData(iso string) RigDict {
 	dict.fnames = loadFile(iso, "fnames.grig")
 	dict.mnames = loadFile(iso, "mnames.grig")
 	dict.lnames = loadFile(iso, "lnames.grig")
-	dict.Streets = loadFile(iso, "Streets.grig")
+	dict.streets = loadFile(iso, "Streets.grig")
 	dict.zipcodes = loadFile(iso, "zipcodes.grig")
 	if verbose {
 		fmt.Println("fname tot:", dict.fnames.tot, dict.fnames.texts[0])
@@ -161,7 +183,7 @@ func getNext(dict RigDict) Rig {
 		rig.Firstname = dict.mnames.texts[rand.Intn(len(dict.mnames.texts))][0]
 	}
 	rig.Lastname = dict.lnames.texts[rand.Intn(len(dict.lnames.texts))][0]
-	rig.Street = dict.Streets.texts[rand.Intn(len(dict.Streets.texts))][0]
+	rig.Street = dict.streets.texts[rand.Intn(len(dict.streets.texts))][0]
 	rig.Streetnumber = rand.Intn(50)
 	zip := dict.zipcodes.texts[rand.Intn(len(dict.zipcodes.texts))]
 	rig.City = zip[1]
