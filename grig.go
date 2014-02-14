@@ -39,7 +39,11 @@ type Rig struct {
 
 func (r Rig) AsText() string {
 	str := fmt.Sprintln(r.Firstname, r.Lastname)
-	str += fmt.Sprintln(r.Street, r.Streetnumber)
+	if langFlag == "en_us" {
+		str += fmt.Sprintln(r.Streetnumber, r.Street)
+	} else {
+		str += fmt.Sprintln(r.Street, r.Streetnumber)
+	}
 	str += fmt.Sprintln(r.Zipcode, r.City)
 	return str
 }
@@ -72,7 +76,7 @@ type RigDict struct {
 }
 
 func init() {
-	flag.StringVar(&langFlag, "lang", "en", "Select ISO 639-1 language code")
+	flag.StringVar(&langFlag, "lang", "en_us", "Select ISO 639-1 language code, defaults to USA")
 	flag.BoolVar(&listLangFlag, "l", false, "List available ISO language codes")
 	flag.BoolVar(&verbose, "v", false, "Verbose output")
 	flag.BoolVar(&jsonFlag, "j", false, "Print as JSON")
@@ -188,7 +192,7 @@ func getNext(dict RigDict) Rig {
 	}
 	rig.Lastname = dict.lnames.texts[rand.Intn(len(dict.lnames.texts))][0]
 	rig.Street = dict.streets.texts[rand.Intn(len(dict.streets.texts))][0]
-	rig.Streetnumber = rand.Intn(50)
+	rig.Streetnumber = rand.Intn(59) + 1
 	zip := dict.zipcodes.texts[rand.Intn(len(dict.zipcodes.texts))]
 	rig.City = zip[1]
 	rig.Zipcode, _ = strconv.Atoi(zip[0])
