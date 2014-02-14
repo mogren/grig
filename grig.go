@@ -164,7 +164,7 @@ func getNext(dict RigDict) Rig {
 	rig.Street = dict.Streets.texts[rand.Intn(len(dict.Streets.texts))][0]
 	rig.Streetnumber = rand.Intn(50)
 	zip := dict.zipcodes.texts[rand.Intn(len(dict.zipcodes.texts))]
-	rig.City = strings.TrimSpace(zip[1])
+	rig.City = zip[1]
 	rig.Zipcode, _ = strconv.Atoi(zip[0])
 	return rig
 }
