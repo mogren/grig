@@ -9,6 +9,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -25,8 +26,23 @@ var verbose bool
 var nrLoopsFlag int
 
 type Rig struct {
-	firstname, lastname, street, city string
-	streetNumber, zipCode             int
+	Firstname, Lastname, Street, City string
+	Streetnumber, Zipcode             int
+}
+
+func (r Rig) AsText() string {
+	str := fmt.Sprintln(r.Firstname, r.Lastname)
+	str += fmt.Sprintln(r.Street, r.Streetnumber)
+	str += fmt.Sprintln(r.Zipcode, r.City)
+	return str
+}
+
+func (r Rig) AsJson() string {
+	b, err := json.MarshalIndent(r, "", "  ")
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	return string(b)
 }
 
 type RigFile struct {
@@ -37,7 +53,7 @@ type RigFile struct {
 }
 
 type RigDict struct {
-	fnames, mnames, lnames, streets, zipcodes RigFile
+	fnames, mnames, lnames, Streets, zipcodes RigFile
 }
 
 func init() {
@@ -57,7 +73,8 @@ func main() {
 	dict := loadData(langFlag)
 	for i := 0; i < nrLoopsFlag; i++ {
 		rig := getNext(dict)
-		fmt.Println(rig.firstname, rig.lastname)
+		fmt.Println(rig.AsText())
+		fmt.Println(rig.AsJson())
 	}
 }
 
@@ -74,8 +91,8 @@ func listLangs() {
 }
 
 func validateDir(iso string) bool {
-	// Check for fnames, mnames, lnames, zipcodes and streets
-	srcFileNames := []string{"fnames.grig", "lnames.grig", "mnames.grig", "streets.grig", "zipcodes.grig"}
+	// Check for fnames, mnames, lnames, zipcodes and Streets
+	srcFileNames := []string{"fnames.grig", "lnames.grig", "mnames.grig", "Streets.grig", "zipcodes.grig"}
 	valid := true
 	for _, srcFile := range srcFileNames {
 		filename := "./data/" + iso + "/" + srcFile
@@ -94,7 +111,7 @@ func loadData(iso string) RigDict {
 	dict.fnames = loadFile(iso, "fnames.grig")
 	dict.mnames = loadFile(iso, "mnames.grig")
 	dict.lnames = loadFile(iso, "lnames.grig")
-	dict.streets = loadFile(iso, "streets.grig")
+	dict.Streets = loadFile(iso, "Streets.grig")
 	dict.zipcodes = loadFile(iso, "zipcodes.grig")
 	if verbose {
 		fmt.Println("fname tot:", dict.fnames.tot, dict.fnames.texts[0])
@@ -139,15 +156,15 @@ func loadFile(iso string, srcFile string) RigFile {
 func getNext(dict RigDict) Rig {
 	rig := Rig{}
 	if rand.Intn(2) == 0 {
-		rig.firstname = dict.fnames.texts[rand.Intn(len(dict.fnames.texts))][0]
+		rig.Firstname = dict.fnames.texts[rand.Intn(len(dict.fnames.texts))][0]
 	} else {
-		rig.firstname = dict.mnames.texts[rand.Intn(len(dict.mnames.texts))][0]
+		rig.Firstname = dict.mnames.texts[rand.Intn(len(dict.mnames.texts))][0]
 	}
-	rig.lastname = dict.lnames.texts[rand.Intn(len(dict.lnames.texts))][0]
-	rig.street = dict.streets.texts[rand.Intn(len(dict.streets.texts))][0]
-	rig.streetNumber = rand.Intn(50)
+	rig.Lastname = dict.lnames.texts[rand.Intn(len(dict.lnames.texts))][0]
+	rig.Street = dict.Streets.texts[rand.Intn(len(dict.Streets.texts))][0]
+	rig.Streetnumber = rand.Intn(50)
 	zip := dict.zipcodes.texts[rand.Intn(len(dict.zipcodes.texts))]
-	rig.city = zip[1]
-	rig.zipCode, _ = strconv.Atoi(zip[0])
+	rig.City = strings.TrimSpace(zip[1])
+	rig.Zipcode, _ = strconv.Atoi(zip[0])
 	return rig
 }
