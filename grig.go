@@ -156,6 +156,10 @@ func loadFile(iso string, srcFile string) RigFile {
 	scanner := bufio.NewScanner(file)
 	sum := 0.0
 	for scanner.Scan() {
+		scanText := scanner.Text()
+		if strings.HasPrefix(scanText, "#") {
+			continue
+		}
 		dataStr := strings.Split(scanner.Text(), "\t")
 		// string to float
 		f, err := strconv.ParseFloat(dataStr[0], 64)
