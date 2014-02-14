@@ -1,6 +1,6 @@
-grig - Like rig, but in go
-====
-The program will generate a random address complete with street names and zip codes.
+## grig - Like rig, but in go
+
+The program will generate any number random addresses, complete with names, street names, cities and zip codes.
 
 To compile:
 ```
@@ -46,3 +46,11 @@ Carroll Olsen
   <city>Kalmar</city>
 </Rig>
 ```
+#### TODO
+* Do correctly weighted randomization with something like the Vose-algorithm
+* Add more locales
+* Split code into packages
+* Add web-server mode
+* Correct weights for swedish data
+
+
