@@ -43,6 +43,6 @@ Carroll Olsen
   <street>Karlsviksgatan</street>
   <nr>45</nr>
   <zip>39363</zip>
-  <city>KALMAR</city>
+  <city>Kalmar</city>
 </Rig>
 ```
