@@ -66,10 +66,9 @@ func (r Rig) AsXml() string {
 }
 
 type RigFile struct {
-	tot     float64
-	weights []float64
-	texts   [][]string
-	vose    *vose.Vose
+	tot   float64
+	texts [][]string
+	vose  *vose.Vose
 }
 
 type RigDict struct {
@@ -151,7 +150,6 @@ func loadData(iso string) RigDict {
 func loadFile(iso string, srcFile string) RigFile {
 	file, err := os.Open("data/" + iso + "/" + srcFile)
 	rigFile := RigFile{}
-	rigFile.weights = make([]float64, 0)
 	rigFile.texts = make([][]string, 0)
 	defer file.Close()
 	if err != nil {
@@ -160,6 +158,7 @@ func loadFile(iso string, srcFile string) RigFile {
 	}
 	scanner := bufio.NewScanner(file)
 	sum := 0.0
+	weights := make([]float64, 0)
 	for scanner.Scan() {
 		scanText := scanner.Text()
 		if strings.HasPrefix(scanText, "#") {
@@ -174,14 +173,14 @@ func loadFile(iso string, srcFile string) RigFile {
 		}
 		sum += f
 		str := dataStr[1:]
-		rigFile.weights = append(rigFile.weights, f)
+		weights = append(weights, f)
 		rigFile.texts = append(rigFile.texts, str)
 		if verbose {
 			fmt.Println("P: ", f, str)
 		}
 	}
 	rigFile.tot = sum
-	rigFile.vose, err = vose.NewVose(rigFile.weights, rand.New(rand.NewSource(time.Now().UnixNano())))
+	rigFile.vose, err = vose.NewVose(weights, rand.New(rand.NewSource(time.Now().UnixNano())))
 	if err != nil {
 		fmt.Println("Vose:", err)
 	}
@@ -191,14 +190,14 @@ func loadFile(iso string, srcFile string) RigFile {
 func getNext(dict RigDict) Rig {
 	rig := Rig{}
 	if rand.Intn(2) == 0 {
-		rig.Firstname = dict.fnames.texts[rand.Intn(len(dict.fnames.texts))][0]
+		rig.Firstname = dict.fnames.texts[dict.fnames.vose.Next()][0]
 	} else {
-		rig.Firstname = dict.mnames.texts[rand.Intn(len(dict.mnames.texts))][0]
+		rig.Firstname = dict.mnames.texts[dict.mnames.vose.Next()][0]
 	}
-	rig.Lastname = dict.lnames.texts[rand.Intn(len(dict.lnames.texts))][0]
-	rig.Street = dict.streets.texts[rand.Intn(len(dict.streets.texts))][0]
+	rig.Lastname = dict.lnames.texts[dict.lnames.vose.Next()][0]
+	rig.Street = dict.streets.texts[dict.streets.vose.Next()][0]
 	rig.Streetnumber = rand.Intn(59) + 1
-	zip := dict.zipcodes.texts[rand.Intn(len(dict.zipcodes.texts))]
+	zip := dict.zipcodes.texts[dict.zipcodes.vose.Next()]
 	rig.City = zip[1]
 	rig.Zipcode, _ = strconv.Atoi(zip[0])
 	return rig
