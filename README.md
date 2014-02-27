@@ -47,9 +47,9 @@ Carroll Olsen
 </Rig>
 ```
 #### TODO
-* Do correctly weighted randomization with something like the Vose-algorithm
 * Add more locales
-* Split code into packages
+* Optimise Vose
+* Split Vose into a separate package
 * Add web-server mode
 * Correct weights for swedish data
 
