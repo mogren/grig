@@ -8,6 +8,7 @@
 package main
 
 import (
+	"./vose/"
 	"bufio"
 	"encoding/json"
 	"encoding/xml"
@@ -68,7 +69,7 @@ type RigFile struct {
 	tot     float64
 	weights []float64
 	texts   [][]string
-	// Vose
+	vose    *vose.Vose
 }
 
 type RigDict struct {
@@ -180,6 +181,10 @@ func loadFile(iso string, srcFile string) RigFile {
 		}
 	}
 	rigFile.tot = sum
+	rigFile.vose, err = vose.NewVose(rigFile.weights, rand.New(rand.NewSource(time.Now().UnixNano())))
+	if err != nil {
+		fmt.Println("Vose:", err)
+	}
 	return rigFile
 }
 

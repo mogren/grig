@@ -36,12 +36,7 @@ func NewVose(prob []float64, generator *rand.Rand) (v *Vose, err error) {
 	for i, d := range prob {
 		scaledProb[i] = d * scale
 	}
-	fmt.Println("Limit:", v.limit)
-	fmt.Println("Scale:", scale)
-	fmt.Println(scaledProb)
 	initVose(v, scaledProb)
-	fmt.Println(v.prob)
-	fmt.Println(v.alias)
 	return v, nil
 }
 
