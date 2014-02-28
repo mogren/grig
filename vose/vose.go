@@ -1,9 +1,15 @@
+// The MIT License (MIT)
+// Copyright (c) 2014 Claes Mogren
+// http://opensource.org/licenses/MIT
+
+// Code to generate a weighted random identity based on weighted input files
+// http://www.keithschwarz.com/darts-dice-coins/
+// http://web.eecs.utk.edu/~vose/Publications/random.pdf
 package vose
 
 import (
 	"errors"
 	"fmt"
-	"math"
 	"math/rand"
 )
 
@@ -31,6 +37,7 @@ func NewVose(prob []float64, generator *rand.Rand) (v *Vose, err error) {
 		}
 		sum += d
 	}
+	// Normalize weights
 	scale := float64(v.limit) / sum
 	scaledProb := make([]float64, v.limit)
 	for i, d := range prob {
@@ -64,12 +71,12 @@ func initVose(v *Vose, scaledProb []float64) {
 		v.prob[j] = scaledProb[j]
 		v.alias[j] = k
 		scaledProb[k] = (scaledProb[k] + scaledProb[j]) - 1.0
-		if scaledProb[k] > 1.0 {
-			large[nl] = k
-			nl += 1
-		} else {
+		if scaledProb[k] < 1.0 {
 			small[ns] = k
 			ns += 1
+		} else {
+			large[nl] = k
+			nl += 1
 		}
 	}
 	for ns != 0 {
@@ -82,18 +89,12 @@ func initVose(v *Vose, scaledProb []float64) {
 	}
 }
 
-func (v Vose) GetLimit() int {
-	return v.limit
-}
-
 func (v Vose) Next() int {
 	u := float64(v.limit) * v.generator.Float64()
-	fl := math.Floor(u)
-	j := int(fl)
-	p := u - fl
+	j := int(u)
+	p := u - float64(j)
 	if p <= v.prob[j] {
 		return j
-	} else {
-		return v.alias[j]
 	}
+	return v.alias[j]
 }

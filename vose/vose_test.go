@@ -22,6 +22,7 @@ func TestInit(t *testing.T) {
 		fmt.Println(v.Next())
 		fmt.Println(v.Next())
 	}
+	fmt.Println("ok")
 }
 
 func TestScale(t *testing.T) {
