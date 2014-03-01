@@ -48,6 +48,7 @@ Carroll Olsen
 ```
 #### TODO
 * Add more locales
+* Make a simpler Roulette-randomizer for smaller datasets
 * Optimise Vose
 * Split Vose into a separate package
 * Add web-server mode
