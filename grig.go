@@ -120,8 +120,9 @@ func validateDir(iso string) bool {
 	// Check for fnames, mnames, lnames, zipcodes and Streets
 	srcFileNames := []string{"fnames.grig", "lnames.grig", "mnames.grig", "Streets.grig", "zipcodes.grig"}
 	valid := true
+	filename := ""
 	for _, srcFile := range srcFileNames {
-		filename := "./data/" + iso + "/" + srcFile
+		filename = "./data/" + iso + "/" + srcFile
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			if verbose {
 				fmt.Println("Data file", srcFile, "missing for", iso)
@@ -159,12 +160,13 @@ func loadFile(iso string, srcFile string) RigFile {
 	scanner := bufio.NewScanner(file)
 	sum := 0.0
 	weights := make([]float64, 0)
+	var dataStr, str []string
 	for scanner.Scan() {
 		scanText := scanner.Text()
 		if strings.HasPrefix(scanText, "#") {
 			continue
 		}
-		dataStr := strings.Split(scanner.Text(), "\t")
+		dataStr = strings.Split(scanner.Text(), "\t")
 		// string to float
 		f, err := strconv.ParseFloat(dataStr[0], 64)
 		if err != nil {
@@ -172,7 +174,7 @@ func loadFile(iso string, srcFile string) RigFile {
 			fmt.Println(err)
 		}
 		sum += f
-		str := dataStr[1:]
+		str = dataStr[1:]
 		weights = append(weights, f)
 		rigFile.texts = append(rigFile.texts, str)
 		if verbose {
