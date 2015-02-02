@@ -29,7 +29,7 @@ var nrLoopsFlag int
 var jsonFlag bool
 var xmlFlag bool
 
-// Holds a randomly generated identity
+// Rig holds a randomly generated identity
 type Rig struct {
 	Firstname    string `json:"firstname" xml:"firstname"`
 	Lastname     string `json:"lastname" xml:"lastname"`
@@ -39,7 +39,7 @@ type Rig struct {
 	City         string `json:"city" xml:"city"`
 }
 
-// Print the Rig as text
+// AsText prints the Rig as text
 func (r Rig) AsText() string {
 	str := fmt.Sprintln(r.Firstname, r.Lastname)
 	if langFlag == "en_us" {
@@ -51,7 +51,7 @@ func (r Rig) AsText() string {
 	return str
 }
 
-// Output the Rig as JSON
+// AsJSON will output the Rig as JSON
 func (r Rig) AsJSON() string {
 	b, err := json.MarshalIndent(r, "", "  ")
 	if err != nil {
@@ -60,7 +60,7 @@ func (r Rig) AsJSON() string {
 	return string(b)
 }
 
-// Output the Rig as XML
+// AsXML will output the Rig as XML
 func (r Rig) AsXML() string {
 	b, err := xml.MarshalIndent(r, "", "  ")
 	if err != nil {
@@ -69,14 +69,14 @@ func (r Rig) AsXML() string {
 	return string(b)
 }
 
-// Struct holding the randomly generated identities
+// RigFile contains all the randomly generated identities
 type RigFile struct {
 	tot   float64
 	texts [][]string
 	vose  *vose.Vose
 }
 
-// Dictionary for the given language
+// RigDict is the dictionary for the given language
 type RigDict struct {
 	fnames, mnames, lnames, streets, zipcodes RigFile
 }

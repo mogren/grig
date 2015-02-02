@@ -1,5 +1,3 @@
-// Package vose is a weighed random generator
-
 // The MIT License (MIT)
 // Copyright (c) 2014 Claes Mogren
 // http://opensource.org/licenses/MIT
@@ -7,6 +5,8 @@
 // Code to generate a weighted random identity based on weighted input files
 // http://www.keithschwarz.com/darts-dice-coins/
 // http://web.eecs.utk.edu/~vose/Publications/random.pdf
+
+// Package vose is a weighed random generator
 package vose
 
 import (
@@ -15,7 +15,7 @@ import (
 	"math/rand"
 )
 
-// Struct holding the weighted generator
+// Vose is holding the weighted generator
 type Vose struct {
 	limit     int
 	prob      []float64
@@ -23,7 +23,7 @@ type Vose struct {
 	generator rand.Rand
 }
 
-// Set up a new Vose struct
+// NewVose sets up a new Vose struct
 func NewVose(prob []float64, generator *rand.Rand) (v *Vose, err error) {
 	if len(prob) == 0 {
 		return nil, errors.New("Empty prob slice!")
@@ -93,7 +93,7 @@ func initVose(v *Vose, scaledProb []float64) {
 	}
 }
 
-// Get the next weighted radom numver from the Vose
+// Next will get the next weighted radom numver from the Vose
 func (v Vose) Next() int {
 	u := float64(v.limit) * v.generator.Float64()
 	j := int(u)
