@@ -29,6 +29,7 @@ var nrLoopsFlag int
 var jsonFlag bool
 var xmlFlag bool
 
+// Holds a randomly generated identity
 type Rig struct {
 	Firstname    string `json:"firstname" xml:"firstname"`
 	Lastname     string `json:"lastname" xml:"lastname"`
@@ -38,6 +39,7 @@ type Rig struct {
 	City         string `json:"city" xml:"city"`
 }
 
+// Print the Rig as text
 func (r Rig) AsText() string {
 	str := fmt.Sprintln(r.Firstname, r.Lastname)
 	if langFlag == "en_us" {
@@ -49,7 +51,8 @@ func (r Rig) AsText() string {
 	return str
 }
 
-func (r Rig) AsJson() string {
+// Output the Rig as JSON
+func (r Rig) AsJSON() string {
 	b, err := json.MarshalIndent(r, "", "  ")
 	if err != nil {
 		fmt.Println("error:", err)
@@ -57,7 +60,8 @@ func (r Rig) AsJson() string {
 	return string(b)
 }
 
-func (r Rig) AsXml() string {
+// Output the Rig as XML
+func (r Rig) AsXML() string {
 	b, err := xml.MarshalIndent(r, "", "  ")
 	if err != nil {
 		fmt.Println("error:", err)
@@ -65,12 +69,14 @@ func (r Rig) AsXml() string {
 	return string(b)
 }
 
+// Struct holding the randomly generated identities
 type RigFile struct {
 	tot   float64
 	texts [][]string
 	vose  *vose.Vose
 }
 
+// Dictionary for the given language
 type RigDict struct {
 	fnames, mnames, lnames, streets, zipcodes RigFile
 }
@@ -95,9 +101,9 @@ func main() {
 	for i := 0; i < nrLoopsFlag; i++ {
 		rig := getNext(dict)
 		if jsonFlag {
-			fmt.Println(rig.AsJson())
+			fmt.Println(rig.AsJSON())
 		} else if xmlFlag {
-			fmt.Println(rig.AsXml())
+			fmt.Println(rig.AsXML())
 		} else {
 			fmt.Println(rig.AsText())
 		}
@@ -159,7 +165,7 @@ func loadFile(iso string, srcFile string) RigFile {
 	}
 	scanner := bufio.NewScanner(file)
 	sum := 0.0
-	weights := make([]float64, 0)
+	var weights []float64
 	var dataStr, str []string
 	for scanner.Scan() {
 		scanText := scanner.Text()

@@ -1,3 +1,5 @@
+// Package vose is a weighed random generator
+
 // The MIT License (MIT)
 // Copyright (c) 2014 Claes Mogren
 // http://opensource.org/licenses/MIT
@@ -13,6 +15,7 @@ import (
 	"math/rand"
 )
 
+// Struct holding the weighted generator
 type Vose struct {
 	limit     int
 	prob      []float64
@@ -20,6 +23,7 @@ type Vose struct {
 	generator rand.Rand
 }
 
+// Set up a new Vose struct
 func NewVose(prob []float64, generator *rand.Rand) (v *Vose, err error) {
 	if len(prob) == 0 {
 		return nil, errors.New("Empty prob slice!")
@@ -56,16 +60,16 @@ func initVose(v *Vose, scaledProb []float64) {
 	for i, sd := range scaledProb {
 		if sd > 1.0 {
 			large[nl] = i
-			nl += 1
+			nl++
 		} else {
 			small[ns] = i
-			ns += 1
+			ns++
 		}
 	}
 	// Build alias
 	for ns != 0 && nl != 0 {
-		ns -= 1
-		nl -= 1
+		ns--
+		nl--
 		j := small[ns]
 		k := large[nl]
 		v.prob[j] = scaledProb[j]
@@ -73,22 +77,23 @@ func initVose(v *Vose, scaledProb []float64) {
 		scaledProb[k] = (scaledProb[k] + scaledProb[j]) - 1.0
 		if scaledProb[k] < 1.0 {
 			small[ns] = k
-			ns += 1
+			ns++
 		} else {
 			large[nl] = k
-			nl += 1
+			nl++
 		}
 	}
 	for ns != 0 {
-		ns -= 1
+		ns--
 		v.prob[small[ns]] = 1
 	}
 	for nl != 0 {
-		nl -= 1
+		nl--
 		v.prob[large[nl]] = 1
 	}
 }
 
+// Get the next weighted radom numver from the Vose
 func (v Vose) Next() int {
 	u := float64(v.limit) * v.generator.Float64()
 	j := int(u)
