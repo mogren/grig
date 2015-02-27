@@ -52,12 +52,16 @@ func (r Rig) AsText() string {
 }
 
 // AsJSON will output the Rig as JSON
-func (r Rig) AsJSON() string {
+func (r Rig) AsJSON(isLast bool) string {
 	b, err := json.MarshalIndent(r, "", "  ")
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	return string(b)
+	if isLast {
+		return string(b)
+	} else {
+		return string(b) + ","
+	}
 }
 
 // AsXML will output the Rig as XML
@@ -98,15 +102,21 @@ func main() {
 	}
 	rand.Seed(time.Now().UnixNano())
 	dict := loadData(langFlag)
+	if jsonFlag && nrLoopsFlag > 1 {
+		fmt.Println("\"list\": [")
+	}
 	for i := 0; i < nrLoopsFlag; i++ {
 		rig := getNext(dict)
 		if jsonFlag {
-			fmt.Println(rig.AsJSON())
+			fmt.Println(rig.AsJSON(i == (nrLoopsFlag - 1)))
 		} else if xmlFlag {
 			fmt.Println(rig.AsXML())
 		} else {
 			fmt.Println(rig.AsText())
 		}
+	}
+	if jsonFlag && nrLoopsFlag > 1 {
+		fmt.Println("]")
 	}
 }
 
