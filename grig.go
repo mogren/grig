@@ -8,12 +8,12 @@
 package main
 
 import (
-	"./vose/"
 	"bufio"
 	"encoding/json"
 	"encoding/xml"
 	"flag"
 	"fmt"
+	"github.com/mogren/grig/vose"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -59,9 +59,8 @@ func (r Rig) AsJSON(isLast bool) string {
 	}
 	if isLast {
 		return string(b)
-	} else {
-		return string(b) + ","
 	}
+	return string(b) + ","
 }
 
 // AsXML will output the Rig as XML
