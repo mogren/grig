@@ -22,19 +22,21 @@ import (
 	"time"
 )
 
-var langFlag string
-var listLangFlag bool
-var verbose bool
-var nrLoopsFlag int
-var jsonFlag bool
-var xmlFlag bool
+var (
+	langFlag     string
+	listLangFlag bool
+	verbose      bool
+	nrLoopsFlag  int
+	jsonFlag     bool
+	xmlFlag      bool
+)
 
 // Rig holds a randomly generated identity
 type Rig struct {
 	Firstname    string `json:"firstname" xml:"firstname"`
 	Lastname     string `json:"lastname" xml:"lastname"`
 	Street       string `json:"street" xml:"street"`
-	Streetnumber int    `json:"nr" xml:"nr"`
+	StreetNumber int    `json:"nr" xml:"nr"`
 	Zipcode      int    `json:"zip" xml:"zip"`
 	City         string `json:"city" xml:"city"`
 }
@@ -43,9 +45,9 @@ type Rig struct {
 func (r Rig) AsText() string {
 	str := fmt.Sprintln(r.Firstname, r.Lastname)
 	if langFlag == "en_us" {
-		str += fmt.Sprintln(r.Streetnumber, r.Street)
+		str += fmt.Sprintln(r.StreetNumber, r.Street)
 	} else {
-		str += fmt.Sprintln(r.Street, r.Streetnumber)
+		str += fmt.Sprintln(r.Street, r.StreetNumber)
 	}
 	str += fmt.Sprintln(r.Zipcode, r.City)
 	return str
@@ -74,7 +76,7 @@ func (r Rig) AsXML() string {
 
 // RigFile contains all the randomly generated identities
 type RigFile struct {
-	tot   float64
+	total float64
 	texts [][]string
 	vose  *vose.Vose
 }
@@ -123,7 +125,7 @@ func listLangs() {
 	// for all dirs in data
 	files, _ := ioutil.ReadDir("./data/")
 	for _, f := range files {
-		if f.IsDir() && !strings.HasPrefix(f.Name(), ",") {
+		if f.IsDir() && !strings.HasPrefix(f.Name(), ".") {
 			if validateDir(f.Name()) {
 				fmt.Println(f.Name())
 			}
@@ -133,7 +135,7 @@ func listLangs() {
 
 func validateDir(iso string) bool {
 	// Check for fnames, mnames, lnames, zipcodes and Streets
-	srcFileNames := []string{"fnames.grig", "lnames.grig", "mnames.grig", "Streets.grig", "zipcodes.grig"}
+	srcFileNames := []string{"fnames.grig", "lnames.grig", "mnames.grig", "streets.grig", "zipcodes.grig"}
 	valid := true
 	filename := ""
 	for _, srcFile := range srcFileNames {
@@ -153,25 +155,27 @@ func loadData(iso string) RigDict {
 	dict.fnames = loadFile(iso, "fnames.grig")
 	dict.mnames = loadFile(iso, "mnames.grig")
 	dict.lnames = loadFile(iso, "lnames.grig")
-	dict.streets = loadFile(iso, "Streets.grig")
+	dict.streets = loadFile(iso, "streets.grig")
 	dict.zipcodes = loadFile(iso, "zipcodes.grig")
 	if verbose {
-		fmt.Println("fname tot:", dict.fnames.tot, dict.fnames.texts[0])
-		fmt.Println("mname tot:", dict.mnames.tot, dict.mnames.texts[0])
-		fmt.Println("lname tot:", dict.lnames.tot, dict.lnames.texts[0])
+		fmt.Printf("fname total: %.f\n", dict.fnames.total)
+		fmt.Printf("mname total: %.f\n", dict.mnames.total)
+		fmt.Printf("lname total: %.f\n", dict.lnames.total)
+		fmt.Printf("streets total: %.f\n", dict.streets.total)
+		fmt.Printf("zipcodes total: %.f\n", dict.zipcodes.total)
 	}
 	return dict
 }
 
 func loadFile(iso string, srcFile string) RigFile {
 	file, err := os.Open("data/" + iso + "/" + srcFile)
-	rigFile := RigFile{}
-	rigFile.texts = make([][]string, 0)
-	defer file.Close()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(0)
 	}
+	defer file.Close()
+	rigFile := RigFile{}
+	rigFile.texts = make([][]string, 0)
 	scanner := bufio.NewScanner(file)
 	sum := 0.0
 	var weights []float64
@@ -192,14 +196,11 @@ func loadFile(iso string, srcFile string) RigFile {
 		str = dataStr[1:]
 		weights = append(weights, f)
 		rigFile.texts = append(rigFile.texts, str)
-		if verbose {
-			fmt.Println("P: ", f, str)
-		}
 	}
-	rigFile.tot = sum
+	rigFile.total = sum
 	rigFile.vose, err = vose.NewVose(weights, rand.New(rand.NewSource(time.Now().UnixNano())))
 	if err != nil {
-		fmt.Println("Vose:", err)
+		fmt.Println("Vose error:", err)
 	}
 	return rigFile
 }
@@ -213,7 +214,7 @@ func getNext(dict RigDict) Rig {
 	}
 	rig.Lastname = dict.lnames.texts[dict.lnames.vose.Next()][0]
 	rig.Street = dict.streets.texts[dict.streets.vose.Next()][0]
-	rig.Streetnumber = rand.Intn(59) + 1
+	rig.StreetNumber = rand.Intn(150) + 1
 	zip := dict.zipcodes.texts[dict.zipcodes.vose.Next()]
 	rig.City = zip[1]
 	rig.Zipcode, _ = strconv.Atoi(zip[0])

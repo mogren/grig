@@ -46,12 +46,23 @@ Carroll Olsen
   <city>Kalmar</city>
 </Rig>
 ```
+
+Performance of different modes when generating 1,000,000 random addresses:
+```
+> time ./grig -n 1000000 >| /dev/null                                                                                                                                                                                                                          /Volumes/Unix/go/src/github.com/mogren/grig
+./grig -n 1000000 >| /dev/null  1.79s user 0.38s system 89% cpu 2.418 total
+> time ./grig -j -n 1000000 >| /dev/null                                                                                                                                                                                                                       /Volumes/Unix/go/src/github.com/mogren/grig
+./grig -j -n 1000000 >| /dev/null  3.44s user 0.43s system 107% cpu 3.607 total
+> time ./grig -x -n 1000000 >| /dev/null                                                                                                                                                                                                                       /Volumes/Unix/go/src/github.com/mogren/grig
+./grig -x -n 1000000 >| /dev/null  7.01s user 0.80s system 122% cpu 6.379 total
+```
+
 #### TODO
 * Add more locales
 * Make a simpler Roulette-randomizer for smaller datasets
 * Optimise Vose
 * Split Vose into a separate package
 * Add web-server mode
-* Correct weights for swedish data
+* Correct weights for Swedish data
 
 

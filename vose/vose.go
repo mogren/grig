@@ -93,7 +93,7 @@ func initVose(v *Vose, scaledProb []float64) {
 	}
 }
 
-// Next will get the next weighted radom numver from the Vose
+// Next will get the next weighted random numver from the Vose struct
 func (v Vose) Next() int {
 	u := float64(v.limit) * v.generator.Float64()
 	j := int(u)
