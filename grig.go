@@ -201,6 +201,7 @@ func loadFile(iso string, srcFile string) RigFile {
 	rigFile.vose, err = vose.NewVose(weights, rand.New(rand.NewSource(time.Now().UnixNano())))
 	if err != nil {
 		fmt.Println("Vose error:", err)
+		panic(1)
 	}
 	return rigFile
 }

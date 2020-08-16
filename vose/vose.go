@@ -26,7 +26,7 @@ type Vose struct {
 // NewVose sets up a new Vose struct
 func NewVose(prob []float64, generator *rand.Rand) (v *Vose, err error) {
 	if len(prob) == 0 {
-		return nil, errors.New("Empty prob slice!")
+		return nil, errors.New("empty probability slice")
 	}
 	v = new(Vose)
 	v.generator = *generator
@@ -47,11 +47,11 @@ func NewVose(prob []float64, generator *rand.Rand) (v *Vose, err error) {
 	for i, d := range prob {
 		scaledProb[i] = d * scale
 	}
-	initVose(v, scaledProb)
+	v.init(scaledProb)
 	return v, nil
 }
 
-func initVose(v *Vose, scaledProb []float64) {
+func (v *Vose) init(scaledProb []float64) {
 	small := make([]int, v.limit)
 	large := make([]int, v.limit)
 	ns := 0
