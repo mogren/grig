@@ -1,7 +1,6 @@
 package vose
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 )
@@ -23,8 +22,7 @@ func TestNewVose(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v, err := NewVose(tt.args.prob, tt.args.generator)
-			fmt.Printf("Vose: %v\n", v)
+			_, err := NewVose(tt.args.prob, tt.args.generator)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewVose() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -70,4 +68,26 @@ func TestVose_Next(t *testing.T) {
 			}
 		})
 	}
+}
+
+func BenchmarkCall(b *testing.B) {
+	type args struct {
+		prob      []float64
+		generator *rand.Rand
+	}
+	gen1 := rand.New(rand.NewSource(1))
+	arg1 := args{prob: []float64{0.1, 0.2, 0.3, 0.4}, generator: gen1}
+	v, err := NewVose(arg1.prob, arg1.generator)
+	if err != nil {
+		b.Error(err)
+	}
+	b.ReportAllocs()
+	b.Run("benchmark", func(t *testing.B) {
+		for i := 0; i < 1_000_000; i++ {
+			r := v.Next()
+			if (r < 0) {
+				b.Errorf("less than zero: %d", r)
+			}
+		}
+	})
 }
