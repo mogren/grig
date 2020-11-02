@@ -49,11 +49,11 @@ func TestVose_Next(t *testing.T) {
 		fields fields
 		want   int
 	}{
-		{"Basic test 1", test1, 2},
+		{"Basic test 1", test1, 3},
 		{"Basic test 2", test1, 3},
-		{"Basic test 3", test1, 2},
+		{"Basic test 3", test1, 1},
 		{"Basic test 4", test1, 1},
-		{"Basic test 5", test1, 1},
+		{"Basic test 5", test1, 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -85,7 +85,7 @@ func BenchmarkCall(b *testing.B) {
 	b.Run("benchmark", func(t *testing.B) {
 		for i := 0; i < 1_000_000; i++ {
 			r := v.Next()
-			if (r < 0) {
+			if r < 0 {
 				b.Errorf("less than zero: %d", r)
 			}
 		}

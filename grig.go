@@ -4,7 +4,6 @@
 
 // Code to generate a weighted random identity based on weighted input files
 // http://www.keithschwarz.com/darts-dice-coins/
-// http://web.eecs.utk.edu/~vose/Publications/random.pdf
 package main
 
 import (

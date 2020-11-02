@@ -4,7 +4,6 @@
 
 // Code to generate a weighted random identity based on weighted input files
 // http://www.keithschwarz.com/darts-dice-coins/
-// http://web.eecs.utk.edu/~vose/Publications/random.pdf
 
 // Package vose is a weighed random generator
 package vose
@@ -93,12 +92,12 @@ func (v *Vose) init(scaledProb []float64) {
 	}
 }
 
-// Next will get the next weighted random numver from the Vose struct
+// Next will get the next weighted random number from the Vose struct
 func (v Vose) Next() int {
-	u := float64(v.limit) * v.generator.Float64()
-	j := int(u)
-	p := u - float64(j)
-	if p <= v.prob[j] {
+	// Die roll
+	j := v.generator.Intn(v.limit)
+	// Weighted coin toss
+	if v.generator.Float64() < v.prob[j]  {
 		return j
 	}
 	return v.alias[j]
