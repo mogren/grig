@@ -170,9 +170,14 @@ func loadFile(iso string, srcFile string) RigFile {
 	file, err := os.Open("data/" + iso + "/" + srcFile)
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(0)
+		os.Exit(1)
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			os.Exit(1)
+		}
+	}(file)
 	rigFile := RigFile{}
 	rigFile.texts = make([][]string, 0)
 	scanner := bufio.NewScanner(file)

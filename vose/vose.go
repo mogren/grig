@@ -97,7 +97,7 @@ func (v Vose) Next() int {
 	// Die roll
 	j := v.generator.Intn(v.limit)
 	// Weighted coin toss
-	if v.generator.Float64() < v.prob[j]  {
+	if v.generator.Float64() < v.prob[j] {
 		return j
 	}
 	return v.alias[j]
