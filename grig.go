@@ -13,7 +13,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/mogren/grig/vose"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"strconv"
@@ -100,7 +99,7 @@ func main() {
 		listLangs()
 		os.Exit(0)
 	}
-	rand.Seed(time.Now().UnixNano())
+	// rand.Seed is deprecated in Go 1.20+, random source is now auto-seeded
 	dict := loadData(langFlag)
 	if jsonFlag && nrLoopsFlag > 1 {
 		fmt.Println("\"list\": [")
@@ -122,7 +121,7 @@ func main() {
 
 func listLangs() {
 	// for all dirs in data
-	files, _ := ioutil.ReadDir("./data/")
+	files, _ := os.ReadDir("./data/")
 	for _, f := range files {
 		if f.IsDir() && !strings.HasPrefix(f.Name(), ".") {
 			if validateDir(f.Name()) {
@@ -136,14 +135,23 @@ func validateDir(iso string) bool {
 	// Check for fnames, mnames, lnames, zipcodes and Streets
 	srcFileNames := []string{"fnames.grig", "lnames.grig", "mnames.grig", "streets.grig", "zipcodes.grig"}
 	valid := true
-	filename := ""
+	
 	for _, srcFile := range srcFileNames {
-		filename = "./data/" + iso + "/" + srcFile
-		if _, err := os.Stat(filename); os.IsNotExist(err) {
-			if verbose {
-				fmt.Println("Data file", srcFile, "missing for", iso)
+		filePath := "./data/" + iso + "/" + srcFile
+		_, err := os.Stat(filePath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				if verbose {
+					fmt.Println("Data file", srcFile, "missing for", iso)
+				}
+				valid = false
+			} else {
+				// Handle other errors (permissions, etc.)
+				if verbose {
+					fmt.Printf("Error accessing %s: %v\n", filePath, err)
+				}
+				valid = false
 			}
-			valid = false
 		}
 	}
 	return valid
@@ -175,6 +183,7 @@ func loadFile(iso string, srcFile string) RigFile {
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
+			fmt.Println("Error closing file:", err)
 			os.Exit(1)
 		}
 	}(file)
@@ -189,22 +198,30 @@ func loadFile(iso string, srcFile string) RigFile {
 		if strings.HasPrefix(scanText, "#") {
 			continue
 		}
-		dataStr = strings.Split(scanner.Text(), "\t")
+		dataStr = strings.Split(scanText, "\t")
 		// string to float
 		f, err := strconv.ParseFloat(dataStr[0], 64)
 		if err != nil {
-			// Ignore error
-			fmt.Println(err)
+			fmt.Printf("Error parsing float in %s: %v\n", srcFile, err)
+			continue
 		}
 		sum += f
 		str = dataStr[1:]
 		weights = append(weights, f)
 		rigFile.texts = append(rigFile.texts, str)
 	}
+	
+	if err := scanner.Err(); err != nil {
+		fmt.Printf("Error reading file %s: %v\n", srcFile, err)
+	}
+	
 	rigFile.total = sum
-	rigFile.vose, err = vose.NewVose(weights, rand.New(rand.NewSource(time.Now().UnixNano())))
+	
+	// Create a new random source for each file to avoid correlations
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	rigFile.vose, err = vose.NewVose(weights, rng)
 	if err != nil {
-		fmt.Println("Vose error:", err)
+		fmt.Printf("Vose error with %s: %v\n", srcFile, err)
 		panic(1)
 	}
 	return rigFile
@@ -222,6 +239,11 @@ func getNext(dict RigDict) Rig {
 	rig.StreetNumber = rand.Intn(150) + 1
 	zip := dict.zipcodes.texts[dict.zipcodes.vose.Next()]
 	rig.City = zip[1]
-	rig.Zipcode, _ = strconv.Atoi(zip[0])
+	zipcode, err := strconv.Atoi(zip[0])
+	if err != nil {
+		// Fallback to default value if conversion fails
+		zipcode = 10000
+	}
+	rig.Zipcode = zipcode
 	return rig
 }

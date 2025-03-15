@@ -36,7 +36,7 @@ func NewVose(prob []float64, generator *rand.Rand) (v *Vose, err error) {
 	// Check for negative numbers and get sum
 	for i, d := range prob {
 		if d < 0.0 {
-			return nil, errors.New(fmt.Sprintf("%.6f", prob[i]) + " is below zero!")
+			return nil, fmt.Errorf("%.6f is below zero!", prob[i])
 		}
 		sum += d
 	}
