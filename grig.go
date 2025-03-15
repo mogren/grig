@@ -17,6 +17,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -27,6 +28,11 @@ var (
 	nrLoopsFlag  int
 	jsonFlag     bool
 	xmlFlag      bool
+	// Global RNG with mutex protection
+	globalRNG = struct {
+		sync.Mutex
+		rng *rand.Rand
+	}{rng: rand.New(rand.NewSource(time.Now().UnixNano()))}
 )
 
 // Rig holds a randomly generated identity
@@ -41,35 +47,40 @@ type Rig struct {
 
 // AsText prints the Rig as text
 func (r Rig) AsText() string {
-	str := fmt.Sprintln(r.Firstname, r.Lastname)
+	var sb strings.Builder
+	sb.WriteString(r.Firstname + " " + r.Lastname + "\n")
 	if langFlag == "en_us" {
-		str += fmt.Sprintln(r.StreetNumber, r.Street)
+		fmt.Fprintf(&sb, "%d %s\n", r.StreetNumber, r.Street)
 	} else {
-		str += fmt.Sprintln(r.Street, r.StreetNumber)
+		fmt.Fprintf(&sb, "%s %d\n", r.Street, r.StreetNumber)
 	}
-	str += fmt.Sprintln(r.Zipcode, r.City)
-	return str
+	fmt.Fprintf(&sb, "%d %s\n", r.Zipcode, r.City)
+	return sb.String()
 }
 
 // AsJSON will output the Rig as JSON
 func (r Rig) AsJSON(isLast bool) string {
-	b, err := json.MarshalIndent(r, "", "  ")
+	var sb strings.Builder
+	b, err := json.Marshal(r) // Use Marshal instead of MarshalIndent for performance
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	if isLast {
-		return string(b)
+	sb.Write(b)
+	if !isLast {
+		sb.WriteString(",")
 	}
-	return string(b) + ","
+	return sb.String()
 }
 
 // AsXML will output the Rig as XML
 func (r Rig) AsXML() string {
-	b, err := xml.MarshalIndent(r, "", "  ")
+	var sb strings.Builder
+	b, err := xml.Marshal(r) // Use Marshal instead of MarshalIndent for performance
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	return string(b)
+	sb.Write(b)
+	return sb.String()
 }
 
 // RigFile contains all the randomly generated identities
@@ -99,23 +110,38 @@ func main() {
 		listLangs()
 		os.Exit(0)
 	}
-	// rand.Seed is deprecated in Go 1.20+, random source is now auto-seeded
+	
 	dict := loadData(langFlag)
-	if jsonFlag && nrLoopsFlag > 1 {
-		fmt.Println("\"list\": [")
-	}
+	
+	// Pre-allocate identities for better performance when generating multiple
+	identities := make([]Rig, 0, nrLoopsFlag)
+	
+	// Generate all identities
 	for i := 0; i < nrLoopsFlag; i++ {
-		rig := getNext(dict)
-		if jsonFlag {
+		identities = append(identities, getNext(dict))
+	}
+	
+	// Output in requested format
+	if jsonFlag {
+		if nrLoopsFlag > 1 {
+			fmt.Println("\"list\": [")
+		}
+		
+		for i, rig := range identities {
 			fmt.Println(rig.AsJSON(i == (nrLoopsFlag - 1)))
-		} else if xmlFlag {
+		}
+		
+		if nrLoopsFlag > 1 {
+			fmt.Println("]")
+		}
+	} else if xmlFlag {
+		for _, rig := range identities {
 			fmt.Println(rig.AsXML())
-		} else {
+		}
+	} else {
+		for _, rig := range identities {
 			fmt.Println(rig.AsText())
 		}
-	}
-	if jsonFlag && nrLoopsFlag > 1 {
-		fmt.Println("]")
 	}
 }
 
@@ -159,11 +185,18 @@ func validateDir(iso string) bool {
 
 func loadData(iso string) RigDict {
 	dict := RigDict{}
-	dict.fnames = loadFile(iso, "fnames.grig")
-	dict.mnames = loadFile(iso, "mnames.grig")
-	dict.lnames = loadFile(iso, "lnames.grig")
-	dict.streets = loadFile(iso, "streets.grig")
-	dict.zipcodes = loadFile(iso, "zipcodes.grig")
+	var wg sync.WaitGroup
+	wg.Add(5)
+	
+	// Load files in parallel
+	go func() { dict.fnames = loadFile(iso, "fnames.grig"); wg.Done() }()
+	go func() { dict.mnames = loadFile(iso, "mnames.grig"); wg.Done() }()
+	go func() { dict.lnames = loadFile(iso, "lnames.grig"); wg.Done() }()
+	go func() { dict.streets = loadFile(iso, "streets.grig"); wg.Done() }()
+	go func() { dict.zipcodes = loadFile(iso, "zipcodes.grig"); wg.Done() }()
+	
+	wg.Wait()
+	
 	if verbose {
 		fmt.Printf("fname total: %.f\n", dict.fnames.total)
 		fmt.Printf("mname total: %.f\n", dict.mnames.total)
@@ -175,6 +208,9 @@ func loadData(iso string) RigDict {
 }
 
 func loadFile(iso string, srcFile string) RigFile {
+	// Initial capacity estimates based on typical file sizes
+	const initialCapacity = 1000
+	
 	file, err := os.Open("data/" + iso + "/" + srcFile)
 	if err != nil {
 		fmt.Println(err)
@@ -187,18 +223,19 @@ func loadFile(iso string, srcFile string) RigFile {
 			os.Exit(1)
 		}
 	}(file)
+	
 	rigFile := RigFile{}
-	rigFile.texts = make([][]string, 0)
+	rigFile.texts = make([][]string, 0, initialCapacity)
 	scanner := bufio.NewScanner(file)
 	sum := 0.0
-	var weights []float64
-	var dataStr, str []string
+	weights := make([]float64, 0, initialCapacity)
+	
 	for scanner.Scan() {
 		scanText := scanner.Text()
 		if strings.HasPrefix(scanText, "#") {
 			continue
 		}
-		dataStr = strings.Split(scanText, "\t")
+		dataStr := strings.Split(scanText, "\t")
 		// string to float
 		f, err := strconv.ParseFloat(dataStr[0], 64)
 		if err != nil {
@@ -206,9 +243,8 @@ func loadFile(iso string, srcFile string) RigFile {
 			continue
 		}
 		sum += f
-		str = dataStr[1:]
 		weights = append(weights, f)
-		rigFile.texts = append(rigFile.texts, str)
+		rigFile.texts = append(rigFile.texts, dataStr[1:])
 	}
 	
 	if err := scanner.Err(); err != nil {
@@ -217,9 +253,11 @@ func loadFile(iso string, srcFile string) RigFile {
 	
 	rigFile.total = sum
 	
-	// Create a new random source for each file to avoid correlations
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-	rigFile.vose, err = vose.NewVose(weights, rng)
+	// Use the global RNG with mutex protection
+	globalRNG.Lock()
+	rigFile.vose, err = vose.NewVose(weights, globalRNG.rng)
+	globalRNG.Unlock()
+	
 	if err != nil {
 		fmt.Printf("Vose error with %s: %v\n", srcFile, err)
 		panic(1)
@@ -229,14 +267,26 @@ func loadFile(iso string, srcFile string) RigFile {
 
 func getNext(dict RigDict) Rig {
 	rig := Rig{}
-	if rand.Intn(2) == 0 {
+	
+	// Use bit mask for coin flip (faster than rand.Intn(2))
+	globalRNG.Lock()
+	coinFlip := globalRNG.rng.Uint32() & 1
+	globalRNG.Unlock()
+	
+	if coinFlip == 0 {
 		rig.Firstname = dict.fnames.texts[dict.fnames.vose.Next()][0]
 	} else {
 		rig.Firstname = dict.mnames.texts[dict.mnames.vose.Next()][0]
 	}
+	
 	rig.Lastname = dict.lnames.texts[dict.lnames.vose.Next()][0]
 	rig.Street = dict.streets.texts[dict.streets.vose.Next()][0]
-	rig.StreetNumber = rand.Intn(150) + 1
+	
+	// Use global RNG with mutex protection
+	globalRNG.Lock()
+	rig.StreetNumber = globalRNG.rng.Intn(150) + 1
+	globalRNG.Unlock()
+	
 	zip := dict.zipcodes.texts[dict.zipcodes.vose.Next()]
 	rig.City = zip[1]
 	zipcode, err := strconv.Atoi(zip[0])

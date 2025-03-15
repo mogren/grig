@@ -27,35 +27,43 @@ func NewVose(prob []float64, generator *rand.Rand) (v *Vose, err error) {
 	if len(prob) == 0 {
 		return nil, errors.New("empty probability slice")
 	}
-	v = new(Vose)
-	v.generator = *generator
-	v.limit = len(prob)
-	v.alias = make([]int, v.limit)
-	v.prob = make([]float64, v.limit)
+	
+	probLen := len(prob)
+	v = &Vose{
+		limit: probLen,
+		alias: make([]int, probLen),
+		prob:  make([]float64, probLen),
+		generator: *generator,
+	}
+	
+	// Check for negative numbers and get sum (in one pass)
 	sum := 0.0
-	// Check for negative numbers and get sum
 	for i, d := range prob {
 		if d < 0.0 {
 			return nil, fmt.Errorf("%.6f is below zero!", prob[i])
 		}
 		sum += d
 	}
-	// Normalize weights
+	
+	// Normalize weights (with preallocated slice)
 	scale := float64(v.limit) / sum
-	scaledProb := make([]float64, v.limit)
+	scaledProb := make([]float64, probLen)
 	for i, d := range prob {
 		scaledProb[i] = d * scale
 	}
+	
 	v.init(scaledProb)
 	return v, nil
 }
 
 func (v *Vose) init(scaledProb []float64) {
+	// Preallocate small and large arrays
 	small := make([]int, v.limit)
 	large := make([]int, v.limit)
 	ns := 0
 	nl := 0
-	// Partition
+	
+	// Partition (more cache-friendly)
 	for i, sd := range scaledProb {
 		if sd > 1.0 {
 			large[nl] = i
@@ -65,15 +73,19 @@ func (v *Vose) init(scaledProb []float64) {
 			ns++
 		}
 	}
-	// Build alias
-	for ns != 0 && nl != 0 {
+	
+	// Build alias (optimized loop)
+	for ns > 0 && nl > 0 {
 		ns--
 		nl--
 		j := small[ns]
 		k := large[nl]
 		v.prob[j] = scaledProb[j]
 		v.alias[j] = k
-		scaledProb[k] = (scaledProb[k] + scaledProb[j]) - 1.0
+		
+		// Update scaledProb[k] in one operation
+		scaledProb[k] = scaledProb[k] + scaledProb[j] - 1.0
+		
 		if scaledProb[k] < 1.0 {
 			small[ns] = k
 			ns++
@@ -82,11 +94,13 @@ func (v *Vose) init(scaledProb []float64) {
 			nl++
 		}
 	}
-	for ns != 0 {
+	
+	// Finalize remaining entries
+	for ns > 0 {
 		ns--
 		v.prob[small[ns]] = 1
 	}
-	for nl != 0 {
+	for nl > 0 {
 		nl--
 		v.prob[large[nl]] = 1
 	}
@@ -96,6 +110,7 @@ func (v *Vose) init(scaledProb []float64) {
 func (v Vose) Next() int {
 	// Die roll
 	j := v.generator.Intn(v.limit)
+	
 	// Weighted coin toss
 	if v.generator.Float64() < v.prob[j] {
 		return j
