@@ -47,14 +47,31 @@ Carroll Olsen
 </Rig>
 ```
 
-Performance of different modes when generating 1,000,000 random addresses:
+Performance of different modes when generating 1,000,000 random addresses on an M1 Pro CPU:
 ```
-> time ./grig -n 1000000 >| /dev/null                                                                                                                                                                                                                          /Volumes/Unix/go/src/github.com/mogren/grig
-./grig -n 1000000 >| /dev/null  1.79s user 0.38s system 89% cpu 2.418 total
-> time ./grig -j -n 1000000 >| /dev/null                                                                                                                                                                                                                       /Volumes/Unix/go/src/github.com/mogren/grig
-./grig -j -n 1000000 >| /dev/null  3.44s user 0.43s system 107% cpu 3.607 total
-> time ./grig -x -n 1000000 >| /dev/null                                                                                                                                                                                                                       /Volumes/Unix/go/src/github.com/mogren/grig
-./grig -x -n 1000000 >| /dev/null  7.01s user 0.80s system 122% cpu 6.379 total
+> time ./grig -n 1000000 >| /dev/null
+./grig -n 1000000 >| /dev/null  0.68s user 0.30s system 87% cpu 1.109 total
+> time ./grig -j -n 1000000 >| /dev/null
+./grig -j -n 1000000 >| /dev/null  0.73s user 0.31s system 110% cpu 0.940 total
+> time ./grig -x -n 1000000 >| /dev/null
+./grig -x -n 1000000 >| /dev/null  3.42s user 0.34s system 178% cpu 2.105 total
+```
+
+To run the benchmark tests:
+
+```
+> go test -bench=.
+goos: darwin
+goarch: arm64
+pkg: github.com/mogren/grig
+cpu: Apple M1 Pro
+BenchmarkGenerateIdentities-10                   9449667               111.7 ns/op
+BenchmarkGenerateMultipleIdentities-10             84114             14260 ns/op
+BenchmarkAsJSON-10                               4673596               246.3 ns/op
+BenchmarkAsXML-10                                 813054              1342 ns/op
+BenchmarkLoadData-10                                3876            323048 ns/op
+PASS
+ok      github.com/mogren/grig  10.016s
 ```
 
 #### TODO
